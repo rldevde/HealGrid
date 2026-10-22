@@ -156,7 +156,7 @@ function RG:ApplyClicksTo(cell)
 		if b.type == "spell" then
 			local lv = lower(value or "")
 			if cell.isDead and self.db.rezOnDead then
-				-- dead units: every spell binding becomes the class rez (VuhDo-style)
+				-- dead units: every spell binding becomes the class rez
 				value = ResolveRez()
 				if not value then cell:SetAttribute(tattr, "togglemenu") end
 			elseif lv == "dispel" or lv == "heal" or lv == "rez" then

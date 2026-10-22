@@ -2,7 +2,7 @@
 
 ![HealGrid](logo.png)
 
-A standalone, healer-oriented raid grid for World of Warcraft — VuhDo-style,
+A standalone, healer-oriented raid grid for World of Warcraft —
 fully configurable, completely independent of any other addon.
 
 Homepage: https://xrl-dev.de · Bugtracker: https://xrl-dev.de/bugtracker
@@ -13,7 +13,7 @@ Homepage: https://xrl-dev.de · Bugtracker: https://xrl-dev.de/bugtracker
   growth directions, group spacing and index / name / role sorting
 - **Click-casting** — a full binding matrix (5 mouse buttons x 4 modifiers),
   `heal` / `dispel` / `rez` keywords resolve to your class spells automatically,
-  dead units get the class resurrection spell (VuhDo-style)
+  dead units automatically get the class resurrection spell
 - **Debuff-centric display** — only harmful auras are shown, with a
   dispel-type colored cell border and an optional "only what I can dispel"
   filter (per-class dispel table)
