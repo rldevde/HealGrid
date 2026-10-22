@@ -633,10 +633,18 @@ function HG:CreateMinimapButton(opts)
 	btn:SetSize(26, 26)
 	btn:SetFrameStrata("MEDIUM")
 	btn:SetFrameLevel(9)
-	local icon = HG:FontString(btn, 12, "OUTLINE")
-	icon:SetPoint("CENTER", 0, 0)
-	icon:SetText(opts.glyph or "HG")
-	icon:SetTextColor(HG.accent.r, HG.accent.g, HG.accent.b)
+	local icon
+	if opts.icon then
+		icon = btn:CreateTexture(nil, "ARTWORK")
+		icon:SetTexture(opts.icon)
+		icon:SetPoint("CENTER")
+		icon:SetSize(18, 18)
+	else
+		icon = HG:FontString(btn, 12, "OUTLINE")
+		icon:SetPoint("CENTER", 0, 0)
+		icon:SetText(opts.glyph or "HG")
+		icon:SetTextColor(HG.accent.r, HG.accent.g, HG.accent.b)
+	end
 	btn.icon = icon
 	HG:CreateBackdrop(btn, "Default")
 	HG:AddHover(btn)

@@ -1,5 +1,7 @@
 # HealGrid
 
+![HealGrid](logo.png)
+
 A standalone, healer-oriented raid grid for World of Warcraft — VuhDo-style,
 fully configurable, completely independent of any other addon.
 

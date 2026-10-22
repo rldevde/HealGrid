@@ -1283,16 +1283,20 @@ function RG:BuildConfig()
 		local c1, c2 = Col(p, 1), Col(p, 2)
 		local meta = C_AddOns and C_AddOns.GetAddOnMetadata or GetAddOnMetadata
 		local ver = meta and meta("HealGrid", "Version") or "?"
+		local logo = c1:CreateTexture(nil, "ARTWORK")
+		logo:SetTexture("Interface\\AddOns\\HealGrid\\logo")
+		logo:SetPoint("TOPLEFT", 16, -8)
+		logo:SetSize(80, 80)
 		local h = HG:FontString(c1, 14, "OUTLINE")
-		h:SetPoint("TOPLEFT", 16, -14)
+		h:SetPoint("TOPLEFT", logo, "TOPRIGHT", 12, -14)
 		h:SetText("|cff" .. HG.accentHex .. "Heal|rGrid  |cff888888v" .. ver .. "|r")
 		local a = HG:FontString(c1, 10)
-		a:SetPoint("TOPLEFT", 16, -36)
+		a:SetPoint("TOPLEFT", h, "BOTTOMLEFT", 0, -4)
 		a:SetText("|cff888888" .. (L["by"] or "by") .. "|r xRL-Dev")
-		LinkRow(c1, L["Homepage"], "https://xrl-dev.de", -62)
-		LinkRow(c1, L["Bugtracker"], "https://xrl-dev.de/bugtracker", -88)
-		LinkRow(c1, L["Impressum"], "https://xrl-dev.de/page/impressum", -114)
-		LinkRow(c1, L["Repository"], "https://github.com/rldevde/HealGrid", -140)
+		LinkRow(c1, L["Homepage"], "https://xrl-dev.de", -104)
+		LinkRow(c1, L["Bugtracker"], "https://xrl-dev.de/bugtracker", -130)
+		LinkRow(c1, L["Impressum"], "https://xrl-dev.de/page/impressum", -156)
+		LinkRow(c1, L["Repository"], "https://github.com/rldevde/HealGrid", -182)
 		local h2 = HG:FontString(c2, 10, "OUTLINE")
 		h2:SetPoint("TOPLEFT", 16, -14)
 		h2:SetText("|cff" .. HG.accentHex .. (L["Slash Commands"] or "Slash Commands") .. "|r")
@@ -1478,7 +1482,7 @@ function RG:Initialize()
 
 	HG.charDb.minimap = HG.charDb.minimap or {}
 	self.minimapBtn = HG:CreateMinimapButton({
-		name = "healgrid", glyph = "HG",
+		name = "healgrid", icon = "Interface\\AddOns\\HealGrid\\icon",
 		store = HG.charDb.minimap, angle = 330,
 		onLeft = function() RG:Toggle() end,
 		onRight = function() RG:ToggleConfig() end,
