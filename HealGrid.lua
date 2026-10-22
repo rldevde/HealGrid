@@ -1096,10 +1096,31 @@ local function ColorRow(parent, key, label, y, container)
 	return sw
 end
 
+-- read-only editbox that selects its contents on focus so URLs can be copied
+local function LinkRow(parent, label, url, y)
+	local t = HG:FontString(parent, 10)
+	t:SetPoint("TOPLEFT", 16, y)
+	t:SetText(label)
+	local eb = CreateFrame("EditBox", nil, parent)
+	eb:SetPoint("LEFT", t, "RIGHT", 10, 0)
+	eb:SetSize(190, 20)
+	eb:SetAutoFocus(false)
+	eb:SetText(url)
+	eb:SetFontObject("GameFontHighlightSmall")
+	HG:SkinEditBox(eb)
+	eb:SetScript("OnEditFocusGained", function(e) e:HighlightText() end)
+	eb:SetScript("OnEscapePressed", function(e) e:ClearFocus() end)
+	eb:SetScript("OnEnterPressed", function(e) e:ClearFocus() end)
+	eb:SetScript("OnTextChanged", function(e, user)
+		if user then e:SetText(url) e:HighlightText() end
+	end)
+	return eb
+end
+
 function RG:BuildConfig()
 	if self.cfg then return self.cfg end
 	local f = CreateFrame("Frame", "HealGridConfig", UIParent, HG.BackdropTemplate)
-	f:SetSize(630, 430)
+	f:SetSize(720, 430)
 	f:SetPoint("CENTER")
 	f:SetMovable(true) f:EnableMouse(true) f:RegisterForDrag("LeftButton")
 	f:SetClampedToScreen(true) f:SetFrameStrata("DIALOG") f:SetToplevel(true)
@@ -1124,7 +1145,7 @@ function RG:BuildConfig()
 			if n == i then tb.txt:SetTextColor(HG.accent.r, HG.accent.g, HG.accent.b) end
 		end
 	end
-	local tabDefs = { "General", "Layout", "Bars", "Text", "Icons", "Colors", "Click Cast" }
+	local tabDefs = { "General", "Layout", "Bars", "Text", "Icons", "Colors", "Click Cast", "About" }
 	for i, name in ipairs(tabDefs) do
 		local tb = CreateFrame("Button", nil, f)
 		tb:SetSize(84, 20)
@@ -1254,6 +1275,38 @@ function RG:BuildConfig()
 		ColorRow(c2, "Poison", L["Poison"], -84, dc)
 		ColorRow(c2, "Disease", L["Disease"], -110, dc)
 		ColorRow(c2, "Other", L["Other"], -136, dc)
+	end
+
+	-- 8: about ------------------------------------------------------------------------------
+	do
+		local p = f.pages[8]
+		local c1, c2 = Col(p, 1), Col(p, 2)
+		local meta = C_AddOns and C_AddOns.GetAddOnMetadata or GetAddOnMetadata
+		local ver = meta and meta("HealGrid", "Version") or "?"
+		local h = HG:FontString(c1, 14, "OUTLINE")
+		h:SetPoint("TOPLEFT", 16, -14)
+		h:SetText("|cff" .. HG.accentHex .. "Heal|rGrid  |cff888888v" .. ver .. "|r")
+		local a = HG:FontString(c1, 10)
+		a:SetPoint("TOPLEFT", 16, -36)
+		a:SetText("|cff888888" .. (L["by"] or "by") .. "|r xRL-Dev")
+		LinkRow(c1, L["Homepage"], "https://xrl-dev.de", -62)
+		LinkRow(c1, L["Bugtracker"], "https://xrl-dev.de/bugtracker", -88)
+		LinkRow(c1, L["Impressum"], "https://xrl-dev.de/page/impressum", -114)
+		LinkRow(c1, L["Repository"], "https://github.com/rldevde/HealGrid", -140)
+		local h2 = HG:FontString(c2, 10, "OUTLINE")
+		h2:SetPoint("TOPLEFT", 16, -14)
+		h2:SetText("|cff" .. HG.accentHex .. (L["Slash Commands"] or "Slash Commands") .. "|r")
+		local s = HG:FontString(c2, 10)
+		s:SetPoint("TOPLEFT", 16, -34)
+		s:SetText("|cffaaaaaa/healgrid, /hg|r — " .. (L["toggle the grid"] or "toggle the grid") .. "\n" ..
+			"|cffaaaaaa/healgrid options|r — " .. (L["open this window"] or "open this window") .. "\n" ..
+			"|cffaaaaaa/healgrid scan|r — " .. (L["dump visible frames (debug)"] or "dump visible frames (debug)"))
+		s:SetSpacing(4)
+		local note = HG:FontString(c2, 10)
+		note:SetPoint("TOPLEFT", 16, -110)
+		note:SetWidth(270)
+		note:SetJustifyH("LEFT")
+		note:SetText("|cff888888" .. (L["Bugs and feedback go to the bugtracker or GitHub issues. Click a link field and press Ctrl+C to copy."] or "") .. "|r")
 	end
 
 	-- 7: click-cast bindings ---------------------------------------------------------------

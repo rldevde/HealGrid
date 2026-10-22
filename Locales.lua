@@ -106,6 +106,18 @@ local deDE = {
 	["Disease"] = "Krankheit",
 	["Other"] = "Sonstige",
 
+	["About"] = "Über",
+	["by"] = "von",
+	["Homepage"] = "Homepage",
+	["Bugtracker"] = "Bugtracker",
+	["Impressum"] = "Impressum",
+	["Repository"] = "Repository",
+	["Slash Commands"] = "Slash-Befehle",
+	["toggle the grid"] = "Grid ein-/ausblenden",
+	["open this window"] = "dieses Fenster öffnen",
+	["dump visible frames (debug)"] = "sichtbare Frames ausgeben (Debug)",
+	["Bugs and feedback go to the bugtracker or GitHub issues. Click a link field and press Ctrl+C to copy."] = "Bugs und Feedback bitte im Bugtracker oder als GitHub-Issue melden. Link-Feld anklicken und mit Strg+C kopieren.",
+
 	["Click Cast"] = "Klick-Zaubern",
 	["Add Binding"] = "Binding hinzufügen",
 	["Pick class spell"] = "Klassenzauber wählen",
