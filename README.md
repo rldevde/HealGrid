@@ -64,6 +64,8 @@ or the minimap button to open the options.
 - **Click Cast** — every mouse button and modifier combination, per-binding
   action type (spell / macro / item / target / focus / menu) with a class
   spell picker
+- **Profiles** — named settings snapshots, string export/import and
+  optional per-character profiles
 - **About** — version, links and slash command reference
 
 ## Saved variables

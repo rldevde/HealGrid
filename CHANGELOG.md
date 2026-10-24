@@ -3,6 +3,28 @@
 All notable changes to HealGrid are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.0]
+
+### Added
+- **Profiles** — save/load/delete named settings snapshots, export to a
+  copyable string and import shared profiles; optional per-character
+  settings ("Char Profile") split from the account-wide ones
+- **Custom debuff highlighting** — comma-separated spell IDs shown as a
+  big centered icon on the cell
+- **Dispel alert** — sound and/or border flash when a debuff your class
+  can remove lands on someone
+- **Cast feedback** — cells show a small castbar and an accent border for
+  the unit your current spellcast targets (cast color configurable)
+- **Own-HoT corner dot** — minimal opt-in indicator that turns red in the
+  last 3 seconds (configurable color)
+- **Context scaling** — separate scale multipliers for solo / party / raid
+- **Event-driven repainting** — unit events repaint only the affected
+  cells instead of a full grid pass
+- **Macro pad** — small clickable zone next to the anchor running a
+  user-defined macro
+- **Options polish** — status footer with live cell/group counts and a
+  global reset button; "Hide Anchor" option
+
 ## [1.0.0]
 
 ### Added

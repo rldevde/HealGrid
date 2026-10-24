@@ -3,7 +3,7 @@
 ## Notes: Healer-oriented raid grid with click-casting
 ## Notes-deDE: Heiler-orientiertes Raid-Grid mit Click-Casting
 ## Author: xRL-Dev.de
-## Version: 1.0.0
+## Version: 1.1.0
 ## SavedVariables: HealGridDB
 ## SavedVariablesPerCharacter: HealGridCharDB
 

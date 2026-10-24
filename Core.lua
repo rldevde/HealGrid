@@ -215,6 +215,21 @@ HG.defaults = {
 	showResIcon = true,
 	hideInCombat = false,
 	testSize = 0,                -- 0 = off | 5/10/20/25/40 fake cells for preview
+	scaleSolo = 1,               -- extra scale multiplier per group context
+	scaleParty = 1,
+	scaleRaid = 1,
+	highlightSpells = "",        -- comma-separated spell IDs -> big center icon
+	showHotCorner = false,       -- own-HoT corner dot
+	hotColor = { r = 0.2, g = 0.9, b = 0.4 },
+	castHighlight = true,        -- border on the unit the player is casting on
+	showCastbar = true,          -- tiny castbar on the cast target's cell
+	castColor = { r = 1, g = 0.7, b = 0.2 },
+	dispelAlert = "NONE",        -- NONE | SOUND | FLASH | BOTH
+	hideAnchor = false,
+	macroPad = false,            -- free click zone running a user macro
+	macroPadText = "",
+	useCharProfile = false,      -- settings stored per character instead of global
+	profiles = {},               -- name -> serialized settings string
 	rangeAlpha = 0.4,
 	incColor = { r = 0.2, g = 0.8, b = 0.2 },
 	absColor = { r = 1, g = 0.85, b = 0.2 },
@@ -276,6 +291,86 @@ local function Merge(dst, src)
 			dst[k] = v
 		end
 	end
+end
+
+local Copy = CopyTable or function(src)
+	local t = {}
+	for k, v in pairs(src) do t[k] = type(v) == "table" and Copy(v) or v end
+	return t
+end
+HG.CopyTable = Copy
+
+-- settings serialize/deserialize (profiles + export/import) -------------------
+local tconcat = table.concat
+local function Ser(v)
+	local t = type(v)
+	if t == "number" or t == "boolean" then return tostring(v) end
+	if t == "string" then return string.format("%q", v) end
+	if t == "table" then
+		local p = {}
+		for k, val in pairs(v) do p[#p + 1] = "[" .. Ser(k) .. "]=" .. Ser(val) end
+		return "{" .. tconcat(p, ",") .. "}"
+	end
+	return "nil"
+end
+
+-- seed the full click-cast matrix when empty (fresh install or cleared list)
+local function SeedClickCast(db)
+	local cc = db.clickCast
+	if cc and cc.bindings and #cc.bindings > 0 then return end
+	db.clickCast = cc or {}
+	cc = db.clickCast
+	cc.bindings = {}
+	for i, b in ipairs(HG.defaults.clickCast.bindings) do
+		cc.bindings[i] = { button = b.button, mod = b.mod, type = b.type, value = b.value }
+	end
+end
+HG.SeedClickCast = SeedClickCast
+
+function HG:SerializeDB()
+	local t = {}
+	for k, v in pairs(HG.db) do
+		if k ~= "profiles" then t[k] = v end
+	end
+	return "HG1:" .. Ser(t)
+end
+
+function HG:DeserializeDB(str)
+	if type(str) ~= "string" then return nil end
+	str = strtrim(str)
+	if str:sub(1, 4) ~= "HG1:" then return nil end
+	local f = (loadstring or load)("return " .. str:sub(5))
+	if not f then return nil end
+	local ok, t = pcall(f)
+	return ok and type(t) == "table" and t or nil
+end
+
+-- replace the live settings table with imported/profile data
+function HG:ApplySettings(t)
+	local db = HG.db
+	for k in pairs(db) do if k ~= "profiles" then db[k] = nil end end
+	Merge(db, t)
+	Merge(db, HG.defaults)
+	SeedClickCast(db)
+	for _, mod in ipairs(self.moduleOrder) do mod.db = db end
+end
+
+function HG:ResetSettings()
+	self:ApplySettings({})
+end
+
+-- switch the active settings table between account-wide and per-character
+function HG:SetCharProfile(on)
+	HealGridDB.useCharProfile = on and true or false
+	if on then
+		HealGridCharDB.settings = Copy(HealGridDB)
+		HealGridCharDB.settings.profiles = nil -- profiles stay account-wide
+		HealGridCharDB.settings.point = nil    -- position is per-character already? keep copy anyway
+		HG.db = HealGridCharDB.settings
+	else
+		HG.db = HealGridDB
+	end
+	for _, mod in ipairs(self.moduleOrder) do mod.db = HG.db end
 end
 
 -- pixel-perfect helpers -----------------------------------------------------------
@@ -704,24 +799,26 @@ pcall(boot.RegisterEvent, boot, "DISPLAY_SIZE_CHANGED")
 boot:SetScript("OnEvent", function(_, event)
 	if event == "PLAYER_LOGIN" then
 		HealGridDB = type(HealGridDB) == "table" and HealGridDB or {}
+		HealGridCharDB = type(HealGridCharDB) == "table" and HealGridCharDB or {}
 		-- migrate the old showDeficit toggle into lifeMode
 		if HealGridDB.lifeMode == nil and HealGridDB.showDeficit == true then
 			HealGridDB.lifeMode = "DEFICIT"
 		end
 		-- seed the full button matrix on fresh installs or after the user cleared
 		-- every row; partial user edits are left untouched
-		local cc = HealGridDB.clickCast
-		if not (cc and cc.bindings and #cc.bindings > 0) then
-			HealGridDB.clickCast = cc or {}
-			cc = HealGridDB.clickCast
-			cc.bindings = {}
-			for i, b in ipairs(HG.defaults.clickCast.bindings) do
-				cc.bindings[i] = { button = b.button, mod = b.mod, type = b.type, value = b.value }
-			end
-		end
+		SeedClickCast(HealGridDB)
 		Merge(HealGridDB, HG.defaults)
 		HG.db = HealGridDB
-		HealGridCharDB = type(HealGridCharDB) == "table" and HealGridCharDB or {}
+		-- per-character settings: copied once from the global profile
+		if HealGridDB.useCharProfile then
+			if type(HealGridCharDB.settings) ~= "table" then
+				HealGridCharDB.settings = Copy(HealGridDB)
+				HealGridCharDB.settings.profiles = nil
+			end
+			SeedClickCast(HealGridCharDB.settings)
+			Merge(HealGridCharDB.settings, HG.defaults)
+			HG.db = HealGridCharDB.settings
+		end
 		HG.charDb = HealGridCharDB
 		HG.myClass = select(2, UnitClass("player"))
 		HG:UpdatePixelScale()
