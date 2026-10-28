@@ -3,6 +3,21 @@
 All notable changes to HealGrid are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.1]
+
+### Fixed
+- **Resurrection on dead cells now works in combat** — spell bindings are
+  built as hybrid macros (`/cast [dead,combat] Battle Rez; [dead] Rez;
+  <spell>`), so the button picks the right spell without protected
+  attribute swaps. Druids get Rebirth in combat, Death Knights Raise Ally
+  and Warlocks Soulstone; other classes keep their normal rez
+- **No more menu fallback on dead cells** — when no rez resolves the click
+  simply does nothing instead of opening the unit menu
+- **Spell detection hardened** — `IsSpellKnown` now probes
+  `C_Spell.IsSpellKnown`, `IsSpellKnownOrOverridesKnown`, `IsSpellKnown`
+  and `IsPlayerSpell`, fixing empty menus on clients where only some
+  APIs exist
+
 ## [1.1.0]
 
 ### Added

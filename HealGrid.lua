@@ -99,7 +99,8 @@ local DISPEL_TYPES = {
 -- click-cast: same binding format as unitframes.clickCast ---------------------
 -- { button = "1".."5", mod = "none"|"shift"|"ctrl"|"alt", type = "spell"|"macro"|"item"|"target"|"togglemenu"|"focus", value = "..." }
 -- spell value "dispel"/"heal"/"rez" resolves to the class spell automatically.
--- while cell.isDead and db.rezOnDead, every spell binding becomes the class rez.
+-- with db.rezOnDead every spell binding becomes a hybrid macro that casts the
+-- class rez on dead cells (battle rez while in combat) — no attribute swaps.
 local CC_VALUE_ATTR = { spell = "spell", macro = "macrotext", item = "item" }
 
 local function ResolveDispel()
@@ -138,19 +139,42 @@ end
 local REZ_SPELLS = {
 	PRIEST = { 2006, 212036 },               -- Resurrection, Mass Resurrection
 	PALADIN = { 7328, 212056 },              -- Redemption, Absolution
-	DRUID = { 50769, 20484, 212040 },        -- Revive, Rebirth, Revitalize
+	DRUID = { 50769, 212040 },               -- Revive, Revitalize
 	SHAMAN = { 2008, 212048 },               -- Ancestral Spirit, Ancestral Vision
 	MONK = { 115178, 212051 },               -- Resuscitate, Reawaken
 	EVOKER = { 361227, 361178 },             -- Return, Mass Return
 	WARLOCK = { 20707 },                     -- Soulstone (rez-capable on later clients)
 }
+-- battle resurrections: usable in combat, checked FIRST while fighting
+local REZ_BATTLE = {
+	DRUID = { 20484 },                       -- Rebirth
+	DEATHKNIGHT = { 61999 },                 -- Raise Ally
+	WARLOCK = { 20707 },                     -- Soulstone on dead targets
+}
 
 local function ResolveRez()
-	for _, id in ipairs(REZ_SPELLS[HG.myClass] or {}) do
-		if HG.IsSpellKnown and HG.IsSpellKnown(id) then
-			return HG.GetSpellInfo(id)
+	-- in combat the battle rez wins; out of combat the cheaper normal rez
+	local first = InCombatLockdown() and REZ_BATTLE or REZ_SPELLS
+	local second = InCombatLockdown() and REZ_SPELLS or REZ_BATTLE
+	for _, list in ipairs({ first[HG.myClass], second[HG.myClass] }) do
+		for _, id in ipairs(list or {}) do
+			if HG.IsSpellKnown and HG.IsSpellKnown(id) then
+				return HG.GetSpellInfo(id)
+			end
 		end
 	end
+end
+
+-- both rez names at once: normal + battle rez (for hybrid macros)
+local function ResolveRezSpells()
+	local normal, battle
+	for _, id in ipairs(REZ_SPELLS[HG.myClass] or {}) do
+		if HG.IsSpellKnown and HG.IsSpellKnown(id) then normal = HG.GetSpellInfo(id) break end
+	end
+	for _, id in ipairs(REZ_BATTLE[HG.myClass] or {}) do
+		if HG.IsSpellKnown and HG.IsSpellKnown(id) then battle = HG.GetSpellInfo(id) break end
+	end
+	return normal, battle
 end
 
 -- spell picker list for the options window: keywords first, then every known
@@ -186,13 +210,25 @@ function RG:ApplyClicksTo(cell)
 		local value = b.value
 		if b.type == "spell" then
 			local lv = lower(value or "")
-			if cell.isDead and self.db.rezOnDead then
-				-- dead units: every spell binding becomes the class rez
-				value = ResolveRez()
-				if not value then cell:SetAttribute(tattr, "togglemenu") end
-			elseif lv == "dispel" or lv == "heal" or lv == "rez" then
+			if lv == "dispel" or lv == "heal" or lv == "rez" then
 				value = lv == "dispel" and ResolveDispel() or (lv == "heal" and ResolveHeal() or ResolveRez())
 				if not value then cell:SetAttribute(tattr, "togglemenu") end -- no spell known -> menu
+			end
+			-- hybrid macro: dead cells cast the class rez automatically (battle
+			-- rez while in combat) — attribute swaps are impossible in combat,
+			-- so the macro condition does the switch instead of cell.isDead
+			local normal, battle
+			if self.db.rezOnDead then normal, battle = ResolveRezSpells() end
+			if normal or battle then
+				local parts = {}
+				if battle then parts[#parts + 1] = format("[dead,combat,help] %s", battle) end
+				if normal then parts[#parts + 1] = format("[dead,help] %s", normal) end
+				if value and value ~= "" then parts[#parts + 1] = format("[help] %s", value) end
+				cell:SetAttribute(tattr, "macro")
+				local vattr = mod .. "macrotext" .. btn
+				cell:SetAttribute(vattr, "/cast " .. table.concat(parts, "; "))
+				cell.ccKeys[#cell.ccKeys + 1] = vattr
+				value = nil
 			end
 		end
 		if vname and value and value ~= "" then

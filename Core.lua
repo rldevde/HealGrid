@@ -60,7 +60,20 @@ function HG.GetSpellInfo(spell)
 	if GetSpellInfo then return GetSpellInfo(spell) end
 end
 
-HG.IsSpellKnown = (C_Spell and C_Spell.IsSpellKnown) or IsSpellKnown
+-- spell-known check: the API name differs between clients, so probe all of them
+function HG.IsSpellKnown(id)
+	if not id then return false end
+	if C_Spell and C_Spell.IsSpellKnown and C_Spell.IsSpellKnown(id) then return true end
+	if IsSpellKnownOrOverridesKnown and IsSpellKnownOrOverridesKnown(id) then return true end
+	if IsSpellKnown and IsSpellKnown(id) then return true end
+	if IsPlayerSpell and IsPlayerSpell(id) then return true end
+	-- no usable API at all: assume known so bindings still resolve to something
+	if not (C_Spell and C_Spell.IsSpellKnown) and not IsSpellKnownOrOverridesKnown
+		and not IsSpellKnown and not IsPlayerSpell then
+		return true
+	end
+	return false
+end
 
 -- auras: always returns a table similar to C_UnitAuras AuraData
 local auraCache = {}
