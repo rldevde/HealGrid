@@ -3,6 +3,12 @@
 All notable changes to HealGrid are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.2] - 2026-10-28
+
+### Fixed
+- **Out-of-combat dead-click did nothing for druids** — the hybrid macro only offered the battle rez under `[dead,combat]`, and Revive does not exist on this client, so out of combat the click fell through to the heal spell on a corpse. The battle rez is now also the out-of-combat fallback (Rebirth is usable outside combat)
+- **`togglemenu` bindings opened the unit menu on dead cells** — menu bindings now become the same hybrid macro; the menu still opens on live targets via a hidden proxy button
+
 ## [1.1.1]
 
 ### Fixed

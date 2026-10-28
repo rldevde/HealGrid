@@ -192,6 +192,37 @@ local function ClassSpellList()
 	return spellPickerList
 end
 
+-- hidden secure proxy: dead-click macros cannot run the togglemenu action, so
+-- the menu is opened through a /click on this button when the unit is alive
+local rezProxyN = 0
+local function RezMenuProxy(cell)
+	if not cell.rezMenuProxy then
+		rezProxyN = rezProxyN + 1
+		local p = CreateFrame("Button", "HGRezMenu" .. rezProxyN, cell, "SecureActionButtonTemplate")
+		p:SetAttribute("type", "togglemenu")
+		p:SetAttribute("useparent-unit", true)
+		p:RegisterForClicks("AnyUp", "AnyDown")
+		p:SetSize(1, 1)
+		p:SetAlpha(0)
+		p:SetPoint("BOTTOMLEFT", cell, "BOTTOMLEFT")
+		cell.rezMenuProxy = p
+	end
+	cell.rezMenuProxy:SetAttribute("unit", cell.unit)
+	return cell.rezMenuProxy
+end
+
+-- hybrid dead-click macro: battle rez in combat, normal rez out of combat,
+-- original spell on live units. The battle rez is usable out of combat too, so
+-- classes without a normal rez (TBC druids only know Rebirth) still rez.
+local function RezMacro(normal, battle, spell)
+	local parts = {}
+	if battle then parts[#parts + 1] = format("[dead,combat,help] %s", battle) end
+	local ooc = normal or battle
+	if ooc then parts[#parts + 1] = format("[dead,help] %s", ooc) end
+	if spell and spell ~= "" then parts[#parts + 1] = format("[help] %s", spell) end
+	return "/cast " .. table.concat(parts, "; ")
+end
+
 function RG:ApplyClicksTo(cell)
 	if not cell.ccKeys then cell.ccKeys = {} end
 	for _, k in ipairs(cell.ccKeys) do cell:SetAttribute(k, nil) end
@@ -208,6 +239,8 @@ function RG:ApplyClicksTo(cell)
 		cell.ccKeys[#cell.ccKeys + 1] = tattr
 		local vname = CC_VALUE_ATTR[b.type or ""]
 		local value = b.value
+		local normal, battle
+		if self.db.rezOnDead then normal, battle = ResolveRezSpells() end
 		if b.type == "spell" then
 			local lv = lower(value or "")
 			if lv == "dispel" or lv == "heal" or lv == "rez" then
@@ -217,19 +250,23 @@ function RG:ApplyClicksTo(cell)
 			-- hybrid macro: dead cells cast the class rez automatically (battle
 			-- rez while in combat) — attribute swaps are impossible in combat,
 			-- so the macro condition does the switch instead of cell.isDead
-			local normal, battle
-			if self.db.rezOnDead then normal, battle = ResolveRezSpells() end
 			if normal or battle then
-				local parts = {}
-				if battle then parts[#parts + 1] = format("[dead,combat,help] %s", battle) end
-				if normal then parts[#parts + 1] = format("[dead,help] %s", normal) end
-				if value and value ~= "" then parts[#parts + 1] = format("[help] %s", value) end
 				cell:SetAttribute(tattr, "macro")
 				local vattr = mod .. "macrotext" .. btn
-				cell:SetAttribute(vattr, "/cast " .. table.concat(parts, "; "))
+				cell:SetAttribute(vattr, RezMacro(normal, battle, value))
 				cell.ccKeys[#cell.ccKeys + 1] = vattr
 				value = nil
 			end
+		elseif b.type == "togglemenu" and (normal or battle) then
+			-- dead cells: rez instead of the unit menu; the menu still opens on
+			-- live targets via the proxy click
+			cell:SetAttribute(tattr, "macro")
+			local vattr = mod .. "macrotext" .. btn
+			cell:SetAttribute(vattr, format("%s
+/stopmacro [dead,help]
+/click %s",
+				RezMacro(normal, battle), RezMenuProxy(cell):GetName()))
+			cell.ccKeys[#cell.ccKeys + 1] = vattr
 		end
 		if vname and value and value ~= "" then
 			local vattr = mod .. vname .. btn
@@ -1928,6 +1965,10 @@ function RG:Initialize()
 
 	self:RegisterEvent("GROUP_ROSTER_UPDATE")
 	self:RegisterEvent("READY_CHECK_FINISHED")
+	-- the class rez resolves from the spellbook: rebind once it has loaded
+	self:RegisterEvent("SPELLS_CHANGED", function()
+		if InCombatLockdown() then HG:RunOutOfCombat(RG.ApplyClicks, RG) else RG:ApplyClicks() end
+	end)
 	-- event-driven per-cell repaint instead of relying on the ticker alone
 	for _, ev in ipairs({
 		"UNIT_HEALTH_FREQUENT", "UNIT_MAXHEALTH", "UNIT_POWER_FREQUENT",
