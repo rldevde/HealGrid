@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 - **Out-of-combat dead-click did nothing for druids** — the hybrid macro only offered the battle rez under `[dead,combat]`, and Revive does not exist on this client, so out of combat the click fell through to the heal spell on a corpse. The battle rez is now also the out-of-combat fallback (Rebirth is usable outside combat)
 - **`togglemenu` bindings opened the unit menu on dead cells** — menu bindings now become the same hybrid macro; the menu still opens on live targets via a hidden proxy button
+- **Healing no longer keeps shapeshift classes stuck in form** — the hybrid click-cast macros now start with `/cancelform` for Druids, Priests (Shadowform) and Shamans (Ghost Wolf), since `/cast` inside a macro does not unshift automatically the way plain spell bindings do
 
 ## [1.1.1]
 

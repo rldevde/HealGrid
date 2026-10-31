@@ -220,7 +220,11 @@ local function RezMacro(normal, battle, spell)
 	local ooc = normal or battle
 	if ooc then parts[#parts + 1] = format("[dead,help] %s", ooc) end
 	if spell and spell ~= "" then parts[#parts + 1] = format("[help] %s", spell) end
-	return "/cast " .. table.concat(parts, "; ")
+	-- /cast inside a macro does not unshift automatically the way plain spell
+	-- bindings do, so form classes get an explicit cancelform first
+	local unshift = (HG.myClass == "DRUID" or HG.myClass == "PRIEST" or HG.myClass == "SHAMAN")
+		and "/cancelform\n" or ""
+	return unshift .. "/cast " .. table.concat(parts, "; ")
 end
 
 function RG:ApplyClicksTo(cell)
