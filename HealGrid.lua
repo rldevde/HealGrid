@@ -214,12 +214,13 @@ end
 -- hybrid dead-click macro: battle rez in combat, normal rez out of combat,
 -- original spell on live units. The battle rez is usable out of combat too, so
 -- classes without a normal rez (TBC druids only know Rebirth) still rez.
-local function RezMacro(normal, battle, spell)
+local function RezMacro(unit, normal, battle, spell)
+	unit = unit or "player"
 	local parts = {}
-	if battle then parts[#parts + 1] = format("[dead,combat,help] %s", battle) end
+	if battle then parts[#parts + 1] = format("[@%s,dead,combat,help] %s", unit, battle) end
 	local ooc = normal or battle
-	if ooc then parts[#parts + 1] = format("[dead,help] %s", ooc) end
-	if spell and spell ~= "" then parts[#parts + 1] = format("[help] %s", spell) end
+	if ooc then parts[#parts + 1] = format("[@%s,dead,help] %s", unit, ooc) end
+	if spell and spell ~= "" then parts[#parts + 1] = format("[@%s,help] %s", unit, spell) end
 	-- /cast inside a macro does not unshift automatically the way plain spell
 	-- bindings do, so form classes get an explicit cancelform first
 	local unshift = (HG.myClass == "DRUID" or HG.myClass == "PRIEST" or HG.myClass == "SHAMAN")
@@ -257,7 +258,7 @@ function RG:ApplyClicksTo(cell)
 			if normal or battle then
 				cell:SetAttribute(tattr, "macro")
 				local vattr = mod .. "macrotext" .. btn
-				cell:SetAttribute(vattr, RezMacro(normal, battle, value))
+				cell:SetAttribute(vattr, RezMacro(cell.unit, normal, battle, value))
 				cell.ccKeys[#cell.ccKeys + 1] = vattr
 				value = nil
 			end
@@ -266,8 +267,8 @@ function RG:ApplyClicksTo(cell)
 			-- live targets via the proxy click
 			cell:SetAttribute(tattr, "macro")
 			local vattr = mod .. "macrotext" .. btn
-			cell:SetAttribute(vattr, format("%s\n/stopmacro [dead,help]\n/click %s",
-				RezMacro(normal, battle), RezMenuProxy(cell):GetName()))
+			cell:SetAttribute(vattr, format("%s\n/stopmacro [@%s,dead,help]\n/click %s",
+				RezMacro(cell.unit, normal, battle), cell.unit or "player", RezMenuProxy(cell):GetName()))
 			cell.ccKeys[#cell.ccKeys + 1] = vattr
 		end
 		if vname and value and value ~= "" then

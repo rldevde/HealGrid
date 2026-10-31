@@ -3,6 +3,15 @@
 All notable changes to HealGrid are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.3]
+
+### Fixed
+- **Click-casts ignored the cell's unit** — the hybrid macros evaluated
+  `[dead]`/`[help]` conditions against the player's current target, so
+  spells landed on whoever was targeted instead of the clicked cell.
+  All conditions now use the explicit `[@unit]` token of the cell's unit
+  (also fixed in the `/stopmacro` line of menu bindings)
+
 ## [1.1.2] - 2026-10-28
 
 ### Fixed
