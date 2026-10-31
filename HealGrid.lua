@@ -262,9 +262,7 @@ function RG:ApplyClicksTo(cell)
 			-- live targets via the proxy click
 			cell:SetAttribute(tattr, "macro")
 			local vattr = mod .. "macrotext" .. btn
-			cell:SetAttribute(vattr, format("%s
-/stopmacro [dead,help]
-/click %s",
+			cell:SetAttribute(vattr, format("%s\n/stopmacro [dead,help]\n/click %s",
 				RezMacro(normal, battle), RezMenuProxy(cell):GetName()))
 			cell.ccKeys[#cell.ccKeys + 1] = vattr
 		end
